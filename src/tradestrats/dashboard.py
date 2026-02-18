@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
+import ccxt
+import pandas as pd
 import streamlit as st
 
 from tradestrats.backtesting import engine
@@ -28,6 +30,15 @@ _STRATEGY_CLASSES: dict[str, type[Strategy]] = {
     "bb": BollingerBandStrategy,
     "box": BoxTheory,
 }
+
+
+@st.cache_data(ttl=3600)
+def _load_symbols(exchange_id: str) -> list[str]:
+    """Load USDT trading pairs from the given exchange (cached for 1 hour)."""
+    exchange = getattr(ccxt, exchange_id)()
+    exchange.load_markets()
+    symbols = sorted(s for s in exchange.symbols if s.endswith("/USDT"))
+    return symbols
 
 
 def _render_sidebar() -> dict:
@@ -57,13 +68,20 @@ def _render_sidebar() -> dict:
     rec_sl = strat_cls.recommended_sl_stop
 
     st.sidebar.header("Market")
-    params["symbol"] = st.sidebar.text_input("Symbol", DEFAULT_SYMBOL)
+    params["exchange"] = st.sidebar.text_input("Exchange", DEFAULT_EXCHANGE)
+    try:
+        symbols = _load_symbols(params["exchange"])
+        default_idx = symbols.index(DEFAULT_SYMBOL) if DEFAULT_SYMBOL in symbols else 0
+        params["symbol"] = st.sidebar.selectbox("Symbol", symbols, index=default_idx)
+    except Exception:
+        params["symbol"] = st.sidebar.text_input("Symbol", DEFAULT_SYMBOL)
+        symbols = []
+    st.session_state["_symbols"] = symbols
     tf_index = TIMEFRAMES.index(rec_tf) if rec_tf in TIMEFRAMES else TIMEFRAMES.index("1h")
     params["timeframe"] = st.sidebar.selectbox("Timeframe", TIMEFRAMES, index=tf_index)
     default_start = date.today() - timedelta(days=180)
     params["start"] = st.sidebar.date_input("Start", default_start)
     params["end"] = st.sidebar.date_input("End", date.today())
-    params["exchange"] = st.sidebar.text_input("Exchange", DEFAULT_EXCHANGE)
 
     st.sidebar.header("Portfolio")
     params["cash"] = st.sidebar.number_input("Initial Cash", 100.0, 1_000_000.0, 10_000.0, step=1000.0)
@@ -131,7 +149,9 @@ def _display_results(result, params: dict) -> None:
     row2[2].metric("Win Rate", f"{s['win_rate']:.2%}")
 
     # Charts in tabs
-    tab_price, tab_signals, tab_equity = st.tabs(["Price & Indicators", "Signals", "Equity Curve"])
+    tab_price, tab_signals, tab_equity, tab_markets = st.tabs(
+        ["Price & Indicators", "Signals", "Equity Curve", "Markets"]
+    )
 
     signals = result.signals
     data = signals[["open", "high", "low", "close", "volume"]]
@@ -148,6 +168,26 @@ def _display_results(result, params: dict) -> None:
     with tab_equity:
         fig = plot_equity_curve(result.equity_curve, title="Equity Curve")
         st.plotly_chart(fig, use_container_width=True)
+
+    with tab_markets:
+        _render_markets_tab()
+
+
+def _render_markets_tab() -> None:
+    """Render the Markets tab with a searchable table of USDT pairs."""
+    symbols = st.session_state.get("_symbols", [])
+    if not symbols:
+        st.info("No market data available. Check the exchange setting.")
+        return
+    search = st.text_input("Search symbols", key="markets_search")
+    rows = []
+    for s in symbols:
+        base, quote = s.split("/")
+        rows.append({"Symbol": s, "Base": base, "Quote": quote})
+    df = pd.DataFrame(rows)
+    if search:
+        df = df[df["Symbol"].str.contains(search.upper(), case=False)]
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
 
 def main() -> None:
@@ -180,6 +220,10 @@ def main() -> None:
 
     if "result" in st.session_state:
         _display_results(st.session_state["result"], st.session_state["params"])
+    else:
+        tab_markets, = st.tabs(["Markets"])
+        with tab_markets:
+            _render_markets_tab()
 
 
 if __name__ == "__main__":
