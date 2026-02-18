@@ -25,6 +25,7 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte. Python 3
 - Neue Strategien in `src/tradestrats/strategies/` anlegen, von `Strategy` erben
 - Tests in `tests/`, Prefix `test_`
 - Daten-Dateien (Parquet) gehoeren nicht ins Git
+- Git-Befehle immer relativ im Projektverzeichnis ausfuehren, keine absoluten Pfade (`git status` statt `git -C /abs/path status`)
 
 ## Kern-Dependencies
 

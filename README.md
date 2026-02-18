@@ -16,7 +16,39 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte.
 uv sync --extra dev
 ```
 
-## Quickstart
+## CLI
+
+```bash
+# Daten fetchen (mit automatischem Parquet-Caching)
+uv run tradestrats fetch BTC/USDT -t 1d -s 2024-01-01 -e 2026-01-01
+uv run tradestrats fetch ETH/USDT -t 4h
+uv run tradestrats fetch                    # Default: BTC/USDT, 1h, letzte 6 Monate
+
+# Cache inspizieren
+uv run tradestrats cache                    # Alle gecachten Dateien auflisten
+uv run tradestrats cache 1                  # Details + letzte 10 Zeilen
+uv run tradestrats cache 1 --head -n 20     # Erste 20 Zeilen anzeigen
+```
+
+### fetch
+
+| Parameter | Beschreibung | Default |
+|-----------|-------------|---------|
+| `symbol` | Trading-Pair, z.B. `BTC/USDT` | `BTC/USDT` |
+| `-t, --timeframe` | Candle-Groesse: `1m, 5m, 15m, 1h, 4h, 1d` | `1h` |
+| `-s, --start` | Startzeitpunkt, z.B. `2025-01-01` | 6 Monate zurueck |
+| `-e, --end` | Endzeitpunkt, z.B. `2026-01-01` | jetzt |
+| `--exchange` | Boerse | `binance` |
+
+### cache
+
+| Parameter | Beschreibung | Default |
+|-----------|-------------|---------|
+| `file` | Dateinummer oder Name zum Inspizieren | alle auflisten |
+| `-n, --rows` | Anzahl Zeilen anzeigen | `10` |
+| `--head` | Erste statt letzte Zeilen anzeigen | aus |
+
+## Quickstart (Python)
 
 ```python
 from tradestrats.data.fetcher import fetch_ohlcv
@@ -37,6 +69,7 @@ Ausfuehrliches Beispiel: `notebooks/01_getting_started.ipynb`
 
 ```
 src/tradestrats/
+├── cli.py                 # CLI (fetch, cache)
 ├── config.py              # Zentrale Konfiguration
 ├── data/fetcher.py        # ccxt Datenabruf + Parquet-Caching
 ├── strategies/

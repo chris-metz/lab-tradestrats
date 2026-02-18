@@ -44,82 +44,93 @@ def fetch_ohlcv(
     """
     cache_file = _cache_path(symbol, timeframe, exchange_id)
 
-    # Try loading from cache
+    start_ts = pd.Timestamp(start, tz="UTC") if start is not None else None
+    end_ts = pd.Timestamp(end, tz="UTC") if end is not None else pd.Timestamp.now(tz="UTC")
+
+    # Check cache and determine what we still need to fetch
+    cached_df = None
+    fetch_ranges: list[tuple[pd.Timestamp | None, pd.Timestamp]] = []
+
     if use_cache and cache_file.exists():
-        df = pd.read_parquet(cache_file)
-        if start is not None:
-            start_ts = pd.Timestamp(start, tz="UTC")
-            df = df[df.index >= start_ts]
-        if end is not None:
-            end_ts = pd.Timestamp(end, tz="UTC")
+        cached_df = pd.read_parquet(cache_file)
+        cache_start = cached_df.index.min()
+        cache_end = cached_df.index.max()
+
+        # Check if we need data before the cache
+        if start_ts is not None and start_ts < cache_start:
+            fetch_ranges.append((start_ts, cache_start))
+
+        # Check if we need data after the cache
+        if end_ts > cache_end:
+            fetch_ranges.append((cache_end, end_ts))
+
+        # If cache fully covers the requested range, return from cache
+        if not fetch_ranges:
+            df = cached_df
+            if start_ts is not None:
+                df = df[df.index >= start_ts]
             df = df[df.index <= end_ts]
-        if not df.empty:
             return df
+    else:
+        # No cache — fetch everything
+        fetch_ranges.append((start_ts, end_ts))
 
-    # Fetch from exchange
+    # Fetch missing ranges from exchange
     exchange = _get_exchange(exchange_id)
-
-    since = None
-    if start is not None:
-        since = int(pd.Timestamp(start, tz="UTC").timestamp() * 1000)
-
-    end_ms = None
-    if end is not None:
-        end_ms = int(pd.Timestamp(end, tz="UTC").timestamp() * 1000)
-
     all_candles: list[list] = []
     limit = 1000  # max candles per request for most exchanges
 
-    while True:
-        candles = exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=limit)
-        if not candles:
-            break
+    for range_start, range_end in fetch_ranges:
+        since = int(range_start.timestamp() * 1000) if range_start is not None else None
+        end_ms = int(range_end.timestamp() * 1000)
 
-        all_candles.extend(candles)
-        last_ts = candles[-1][0]
+        while True:
+            candles = exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=limit)
+            if not candles:
+                break
 
-        # Stop if we've reached the end
-        if end_ms is not None and last_ts >= end_ms:
-            break
+            all_candles.extend(candles)
+            last_ts = candles[-1][0]
 
-        # Stop if we got fewer candles than requested (no more data)
-        if len(candles) < limit:
-            break
+            # Stop if we've reached the end
+            if last_ts >= end_ms:
+                break
 
-        # Move since forward to avoid duplicates
-        since = last_ts + 1
+            # Stop if we got fewer candles than requested (no more data)
+            if len(candles) < limit:
+                break
 
-    if not all_candles:
-        return pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+            # Move since forward to avoid duplicates
+            since = last_ts + 1
 
-    df = pd.DataFrame(all_candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
-    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms", utc=True)
-    df = df.set_index("timestamp")
+    # Build DataFrame from freshly fetched candles
+    if all_candles:
+        new_df = pd.DataFrame(all_candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        new_df["timestamp"] = pd.to_datetime(new_df["timestamp"], unit="ms", utc=True)
+        new_df = new_df.set_index("timestamp")
+    else:
+        new_df = pd.DataFrame(columns=["open", "high", "low", "close", "volume"])
+
+    # Merge with cached data
+    if cached_df is not None:
+        df = pd.concat([cached_df, new_df])
+    else:
+        df = new_df
+
     df = df[~df.index.duplicated(keep="last")]
     df = df.sort_index()
 
-    # Filter by end date
-    if end_ms is not None:
-        end_ts = pd.Timestamp(end, tz="UTC")
-        df = df[df.index <= end_ts]
+    if df.empty:
+        return df
 
-    # Cache to Parquet
+    # Update cache with full dataset
     if use_cache:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
-        # Merge with existing cache if present
-        if cache_file.exists():
-            existing = pd.read_parquet(cache_file)
-            df = pd.concat([existing, df])
-            df = df[~df.index.duplicated(keep="last")]
-            df = df.sort_index()
         df.to_parquet(cache_file)
 
     # Apply start/end filters for return value
-    if start is not None:
-        start_ts = pd.Timestamp(start, tz="UTC")
+    if start_ts is not None:
         df = df[df.index >= start_ts]
-    if end is not None:
-        end_ts = pd.Timestamp(end, tz="UTC")
-        df = df[df.index <= end_ts]
+    df = df[df.index <= end_ts]
 
     return df
