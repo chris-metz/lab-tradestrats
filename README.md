@@ -5,7 +5,7 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte.
 ## Features
 
 - **Datenabruf** — OHLCV-Daten via ccxt (Binance etc.) mit automatischem Parquet-Caching
-- **Strategien** — Flexibles Interface fuer beliebige Strategietypen (SMA Crossover, RSI Mean-Reversion)
+- **Strategien** — Flexibles Interface fuer beliebige Strategietypen (SMA Crossover, RSI Mean-Reversion, Bollinger Band Scalping)
 - **Backtesting** — Vektorisiertes Backtesting mit vectorbt (Sharpe, Drawdown, Win Rate etc.)
 - **Indikatoren** — Zugriff auf 130+ technische Indikatoren via pandas-ta
 - **Visualisierung** — Interaktive Plotly-Charts (Candlestick, Equity Curve, Signale)
@@ -33,6 +33,7 @@ uv run tradestrats cache 1 --head -n 20     # Erste 20 Zeilen anzeigen
 # Backtest ausfuehren
 uv run tradestrats backtest                              # Default: RSI, BTC/USDT, 1d, 6 Monate
 uv run tradestrats backtest --strategy sma               # SMA Crossover
+uv run tradestrats backtest ETH/USDT --strategy bb -t 5m # Bollinger Band Scalping auf 5m
 uv run tradestrats backtest --strategy rsi -t 4h         # RSI auf 4h-Candles
 uv run tradestrats backtest -s 2025-01-01 -e 2025-06-01  # Custom Zeitraum
 uv run tradestrats backtest --cash 50000 --fees 0.002    # Custom Kapital/Fees
@@ -61,7 +62,7 @@ uv run tradestrats backtest --cash 50000 --fees 0.002    # Custom Kapital/Fees
 | Parameter | Beschreibung | Default |
 |-----------|-------------|---------|
 | `symbol` | Trading-Pair, z.B. `BTC/USDT` | `BTC/USDT` |
-| `-S, --strategy` | Strategie: `rsi` oder `sma` | `rsi` |
+| `-S, --strategy` | Strategie: `rsi`, `sma` oder `bb` | `rsi` |
 | `-t, --timeframe` | Candle-Groesse: `1m, 5m, 15m, 1h, 4h, 1d` | `1d` |
 | `-s, --start` | Startzeitpunkt, z.B. `2025-01-01` | 6 Monate zurueck |
 | `-e, --end` | Endzeitpunkt, z.B. `2025-06-01` | jetzt |
@@ -98,7 +99,8 @@ src/tradestrats/
 ├── strategies/
 │   ├── base.py            # Abstrakte Strategy-Basisklasse
 │   ├── sma_cross.py       # SMA Crossover (Trend-Following)
-│   └── rsi_mean_reversion.py # RSI Mean-Reversion
+│   ├── rsi_mean_reversion.py # RSI Mean-Reversion
+│   └── bollinger_band.py  # Bollinger Band Scalping
 ├── backtesting/engine.py  # vectorbt Backtesting Runner
 ├── indicators/registry.py # pandas-ta Indikator-Wrapper
 └── visualization/charts.py # Plotly Charts

@@ -16,7 +16,7 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte. Python 3
 - **src-Layout**: Code liegt in `src/tradestrats/`, installiert als Package
 - **Datenfluss**: `fetcher.py` → OHLCV DataFrame → `Strategy.generate_signals()` → `engine.run()` → `BacktestResult`
 - **Caching**: OHLCV-Daten werden automatisch als Parquet in `data/` gecacht
-- **Strategien**: Erben von `strategies/base.py:Strategy`, muessen `generate_signals(data) -> DataFrame` implementieren. Signal-Spalte: 1=buy, -1=sell, 0=hold. Vorhandene Strategien: `sma_cross.py` (Trend-Following), `rsi_mean_reversion.py` (Mean-Reversion)
+- **Strategien**: Erben von `strategies/base.py:Strategy`, muessen `generate_signals(data) -> DataFrame` implementieren. Signal-Spalte: 1=buy, -1=sell, 0=hold. Vorhandene Strategien: `sma_cross.py` (Trend-Following), `rsi_mean_reversion.py` (Mean-Reversion), `bollinger_band.py` (Scalping)
 
 ## Konventionen
 
