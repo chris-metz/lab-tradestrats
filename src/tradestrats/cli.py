@@ -10,7 +10,7 @@ import pandas as pd
 
 from tradestrats.backtesting import engine
 from tradestrats.config import DATA_DIR, DEFAULT_EXCHANGE, DEFAULT_SYMBOL, DEFAULT_TIMEFRAME, TIMEFRAMES
-from tradestrats.data.fetcher import fetch_ohlcv
+from tradestrats.data.fetcher import fetch_ohlcv, is_stock_symbol
 from tradestrats.strategies.bollinger_band import BollingerBandStrategy
 from tradestrats.strategies.box_theory import BoxTheory
 from tradestrats.strategies.rsi_mean_reversion import RSIMeanReversion
@@ -163,7 +163,10 @@ def _cmd_fetch(args):
 
     end = args.end
 
-    print(f"Lade {args.symbol} | {args.timeframe} | {args.exchange}")
+    if is_stock_symbol(args.symbol):
+        print(f"Lade {args.symbol} | {args.timeframe} | yfinance")
+    else:
+        print(f"Lade {args.symbol} | {args.timeframe} | {args.exchange}")
     print(f"Zeitraum: {start} bis {end or 'jetzt'}")
     print()
 
@@ -264,8 +267,9 @@ def _cmd_backtest(args):
 
     end = args.end
 
+    source = "yfinance" if is_stock_symbol(args.symbol) else args.exchange
     print(f"Strategie:  {strategy.name}")
-    print(f"Symbol:     {args.symbol} | {timeframe} | {args.exchange}")
+    print(f"Symbol:     {args.symbol} | {timeframe} | {source}")
     print(f"Zeitraum:   {start} bis {end or 'jetzt'}")
     print(f"Kapital:    {args.cash:,.2f} | Fees: {args.fees} | Stop-Loss: {sl_stop:.0%}")
     print()

@@ -15,6 +15,7 @@ dependencies = [
     "pandas-ta>=0.3",
     "plotly>=5.18",
     "pyarrow>=15.0",
+    "yfinance>=0.2",
 ]
 
 [project.optional-dependencies]

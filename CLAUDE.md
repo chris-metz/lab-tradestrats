@@ -2,7 +2,7 @@
 
 ## Projekt
 
-Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte. Python 3.12, verwaltet mit uv.
+Trading-Strategie-Analyse und Backtesting-Framework fuer Krypto- und Aktienmaerkte. Python 3.12, verwaltet mit uv.
 
 ## Commands
 
@@ -16,7 +16,8 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte. Python 3
 
 - **src-Layout**: Code liegt in `src/tradestrats/`, installiert als Package
 - **Datenfluss**: `fetcher.py` → OHLCV DataFrame → `Strategy.generate_signals()` → `engine.run()` → `BacktestResult`
-- **Caching**: OHLCV-Daten werden automatisch als Parquet in `data/` gecacht
+- **Daten-Provider**: `"/" in symbol` → ccxt (Crypto, z.B. `BTC/USDT`), kein `/` → yfinance (Aktien/ETFs, z.B. `AAPL`, `^GSPC`). Dispatch passiert automatisch in `fetcher.py:fetch_ohlcv()`. Helper: `is_stock_symbol(symbol)`.
+- **Caching**: OHLCV-Daten werden automatisch als Parquet in `data/` gecacht. Crypto: `{exchange}_{symbol}_{tf}.parquet`, Stocks: `yfinance_{ticker}_{tf}.parquet`
 - **Strategien**: Erben von `strategies/base.py:Strategy`, muessen `generate_signals(data) -> DataFrame` implementieren. Signal-Spalte: 1=buy, -1=sell, 0=hold. Jede Strategie definiert `recommended_timeframe` und `recommended_sl_stop` als Class-Attribute — CLI und Dashboard nutzen diese automatisch.
 - **Vorhandene Strategien**: `sma_cross.py` (Trend-Following, 1d, 5% SL), `rsi_mean_reversion.py` (Mean-Reversion, 1h, 5% SL), `bollinger_band.py` (Scalping, 1h, 3% SL), `box_theory.py` (Intraday Mean-Reversion, 5m, 2% SL)
 - **Strategie-Docs**: `docs/strategies/<name>.md` — jede implementierte Strategie hat eine eigene Doku-Seite
@@ -51,7 +52,8 @@ Wenn eine Strategie aus einem YouTube-Video implementiert wird:
 
 ## Kern-Dependencies
 
-- **ccxt** — Boersen-API-Abstraktion
+- **ccxt** — Boersen-API-Abstraktion (Crypto)
+- **yfinance** — Yahoo Finance Daten (Aktien, ETFs, Indizes)
 - **vectorbt** — Vektorisiertes Backtesting
 - **pandas-ta** — Technische Indikatoren
 - **plotly** — Interaktive Charts

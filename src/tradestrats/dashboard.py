@@ -8,7 +8,7 @@ import streamlit as st
 
 from tradestrats.backtesting import engine
 from tradestrats.config import DEFAULT_EXCHANGE, DEFAULT_SYMBOL, TIMEFRAMES
-from tradestrats.data.fetcher import fetch_ohlcv
+from tradestrats.data.fetcher import fetch_ohlcv, is_stock_symbol
 from tradestrats.strategies.base import Strategy
 from tradestrats.strategies.bollinger_band import BollingerBandStrategy
 from tradestrats.strategies.box_theory import BoxTheory
@@ -68,15 +68,23 @@ def _render_sidebar() -> dict:
     rec_sl = strat_cls.recommended_sl_stop
 
     st.sidebar.header("Market")
-    params["exchange"] = st.sidebar.text_input("Exchange", DEFAULT_EXCHANGE)
-    try:
-        symbols = _load_symbols(params["exchange"])
-        default_idx = symbols.index(DEFAULT_SYMBOL) if DEFAULT_SYMBOL in symbols else 0
-        params["symbol"] = st.sidebar.selectbox("Symbol", symbols, index=default_idx)
-    except Exception:
-        params["symbol"] = st.sidebar.text_input("Symbol", DEFAULT_SYMBOL)
-        symbols = []
-    st.session_state["_symbols"] = symbols
+    market_type = st.sidebar.radio("Market", ["Crypto", "Stocks"], horizontal=True)
+    params["market_type"] = market_type
+
+    if market_type == "Crypto":
+        params["exchange"] = st.sidebar.text_input("Exchange", DEFAULT_EXCHANGE)
+        try:
+            symbols = _load_symbols(params["exchange"])
+            default_idx = symbols.index(DEFAULT_SYMBOL) if DEFAULT_SYMBOL in symbols else 0
+            params["symbol"] = st.sidebar.selectbox("Symbol", symbols, index=default_idx)
+        except Exception:
+            params["symbol"] = st.sidebar.text_input("Symbol", DEFAULT_SYMBOL)
+            symbols = []
+        st.session_state["_symbols"] = symbols
+    else:
+        params["exchange"] = DEFAULT_EXCHANGE  # ignored for stocks
+        params["symbol"] = st.sidebar.text_input("Ticker", "AAPL", help="z.B. AAPL, MSFT, ^GSPC")
+        st.session_state["_symbols"] = []
     tf_index = TIMEFRAMES.index(rec_tf) if rec_tf in TIMEFRAMES else TIMEFRAMES.index("1h")
     params["timeframe"] = st.sidebar.selectbox("Timeframe", TIMEFRAMES, index=tf_index)
     default_start = date.today() - timedelta(days=180)
@@ -148,29 +156,32 @@ def _display_results(result, params: dict) -> None:
     row2[1].metric("Total Trades", f"{s['total_trades']}")
     row2[2].metric("Win Rate", f"{s['win_rate']:.2%}")
 
-    # Charts in tabs
-    tab_price, tab_signals, tab_equity, tab_markets = st.tabs(
-        ["Price & Indicators", "Signals", "Equity Curve", "Markets"]
-    )
+    # Charts in tabs — Markets tab only for Crypto
+    show_markets = params.get("market_type", "Crypto") == "Crypto"
+    tab_names = ["Price & Indicators", "Signals", "Equity Curve"]
+    if show_markets:
+        tab_names.append("Markets")
+    tabs = st.tabs(tab_names)
 
     signals = result.signals
     data = signals[["open", "high", "low", "close", "volume"]]
 
-    with tab_price:
+    with tabs[0]:
         indicators = _get_indicators(params["strategy_key"], signals)
         fig = plot_candlestick(data, indicators=indicators, title=f"{params['symbol']} — Price & Indicators")
         st.plotly_chart(fig, use_container_width=True)
 
-    with tab_signals:
+    with tabs[1]:
         fig = plot_signals(data, signals, title=f"{params['symbol']} — Trading Signals")
         st.plotly_chart(fig, use_container_width=True)
 
-    with tab_equity:
+    with tabs[2]:
         fig = plot_equity_curve(result.equity_curve, title="Equity Curve")
         st.plotly_chart(fig, use_container_width=True)
 
-    with tab_markets:
-        _render_markets_tab()
+    if show_markets:
+        with tabs[3]:
+            _render_markets_tab()
 
 
 def _render_markets_tab() -> None:
@@ -220,7 +231,7 @@ def main() -> None:
 
     if "result" in st.session_state:
         _display_results(st.session_state["result"], st.session_state["params"])
-    else:
+    elif params.get("market_type", "Crypto") == "Crypto":
         tab_markets, = st.tabs(["Markets"])
         with tab_markets:
             _render_markets_tab()
