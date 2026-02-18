@@ -10,6 +10,7 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte.
 - **Indikatoren** — Zugriff auf 130+ technische Indikatoren via pandas-ta
 - **Visualisierung** — Interaktive Plotly-Charts (Candlestick, Equity Curve, Signale)
 - **CLI-Backtest** — Backtests direkt aus dem Terminal mit `tradestrats backtest`
+- **Dashboard** — Interaktives Streamlit-Dashboard fuer Backtesting im Browser
 
 ## Setup
 
@@ -71,6 +72,20 @@ uv run tradestrats backtest --cash 50000 --fees 0.002    # Custom Kapital/Fees
 | `--fees` | Fee-Rate (Dezimalzahl, z.B. `0.001` = 0.1%) | `0.001` |
 | `--sl` | Stop-Loss (Dezimalzahl, z.B. `0.05` = 5%) | `0.05` |
 
+## Dashboard
+
+Interaktives Streamlit-Dashboard fuer Backtesting im Browser.
+
+```bash
+# Streamlit installieren (einmalig)
+uv sync --extra dashboard
+
+# Dashboard starten
+uv run tradestrats dashboard
+```
+
+Im Dashboard koennen Strategie, Markt-Parameter und Portfolio-Einstellungen per UI konfiguriert und Backtests per Klick gestartet werden. Ergebnisse werden als Metriken und interaktive Plotly-Charts angezeigt.
+
 ## Quickstart (Python)
 
 ```python
@@ -94,7 +109,8 @@ Notebooks:
 
 ```
 src/tradestrats/
-├── cli.py                 # CLI (fetch, cache, backtest)
+├── cli.py                 # CLI (fetch, cache, backtest, dashboard)
+├── dashboard.py           # Streamlit Backtesting Dashboard
 ├── config.py              # Zentrale Konfiguration
 ├── data/fetcher.py        # ccxt Datenabruf + Parquet-Caching
 ├── strategies/

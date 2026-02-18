@@ -10,6 +10,7 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte. Python 3
 - `uv run pytest` — Tests ausfuehren
 - `uv run jupyter notebook` — Jupyter starten
 - `uv run tradestrats backtest` — Backtest aus dem Terminal (Default: RSI, BTC/USDT, 1d, 6Mo)
+- `uv sync --extra dashboard && uv run tradestrats dashboard` — Streamlit-Dashboard starten
 
 ## Architektur
 

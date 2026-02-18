@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
+import sys
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pandas as pd
 
@@ -76,6 +79,9 @@ def main():
         help="Erste Zeilen statt letzte anzeigen",
     )
 
+    # --- dashboard ---
+    subparsers.add_parser("dashboard", help="Streamlit-Dashboard starten")
+
     # --- backtest ---
     bt_parser = subparsers.add_parser("backtest", help="Backtest einer Strategie ausfuehren")
     bt_parser.add_argument(
@@ -142,6 +148,8 @@ def main():
         _cmd_cache(args)
     elif args.command == "backtest":
         _cmd_backtest(args)
+    elif args.command == "dashboard":
+        _cmd_dashboard()
 
 
 def _cmd_fetch(args):
@@ -282,3 +290,8 @@ def _cmd_backtest(args):
     print(f"  Trades:        {s['total_trades']:>10}")
     print(f"  Win Rate:      {s['win_rate']:>10.2%}")
     print("=" * 40)
+
+
+def _cmd_dashboard():
+    dashboard_path = Path(__file__).resolve().parent / "dashboard.py"
+    sys.exit(subprocess.run(["streamlit", "run", str(dashboard_path)]).returncode)
