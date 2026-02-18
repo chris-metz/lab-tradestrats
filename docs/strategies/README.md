@@ -6,23 +6,24 @@ Weitere Strategie-Ideen werden als [GitHub Issues](https://github.com/chris-metz
 
 ## Implementierte Strategien
 
-| Strategie | Typ | CLI-Key | Docs | Code |
-|-----------|-----|---------|------|------|
-| SMA Crossover | Trend-Following | `sma` | [sma_cross.md](sma_cross.md) | [sma_cross.py](../../src/tradestrats/strategies/sma_cross.py) |
-| RSI Mean Reversion | Mean-Reversion | `rsi` | [rsi_mean_reversion.md](rsi_mean_reversion.md) | [rsi_mean_reversion.py](../../src/tradestrats/strategies/rsi_mean_reversion.py) |
-| Bollinger Band Scalping | Scalping | `bb` | [bollinger_band.md](bollinger_band.md) | [bollinger_band.py](../../src/tradestrats/strategies/bollinger_band.py) |
-| Box Theory | Mean-Reversion (Intraday) | `box` | [box_theory.md](box_theory.md) | [box_theory.py](../../src/tradestrats/strategies/box_theory.py) |
+| Strategie | Typ | CLI-Key | Timeframe | Stop-Loss | Docs |
+|-----------|-----|---------|-----------|-----------|------|
+| SMA Crossover | Trend-Following | `sma` | `1d` | 5% | [sma_cross.md](sma_cross.md) |
+| RSI Mean Reversion | Mean-Reversion | `rsi` | `1h` | 5% | [rsi_mean_reversion.md](rsi_mean_reversion.md) |
+| Bollinger Band Scalping | Scalping | `bb` | `1h` | 3% | [bollinger_band.md](bollinger_band.md) |
+| Box Theory | Mean-Reversion (Intraday) | `box` | `5m` | 2% | [box_theory.md](box_theory.md) |
+
+Jede Strategie hat eigene empfohlene Defaults fuer Timeframe und Stop-Loss. Diese werden automatisch in CLI und Dashboard verwendet, wenn nichts anderes angegeben wird. Details in den jeweiligen Docs.
 
 ## Schnellstart
 
 ```bash
-# Backtest einer Strategie ausfuehren
-uv run tradestrats backtest -S <key> -t <timeframe> <symbol>
+# Backtest mit empfohlenen Strategie-Defaults (Timeframe + Stop-Loss automatisch)
+uv run tradestrats backtest -S box BTC/USDT    # → 5m, 2% SL
+uv run tradestrats backtest -S sma BTC/USDT    # → 1d, 5% SL
 
-# Beispiele
-uv run tradestrats backtest -S rsi BTC/USDT              # RSI, 1h, 6 Monate
-uv run tradestrats backtest -S box -t 1h --sl 0.02 BTC/USDT  # Box Theory, enger SL
-uv run tradestrats backtest -S sma -t 1d ETH/USDT        # SMA, Daily
+# Manuell ueberschreiben
+uv run tradestrats backtest -S box -t 15m --sl 0.03 BTC/USDT
 ```
 
 ## Neue Strategie hinzufuegen

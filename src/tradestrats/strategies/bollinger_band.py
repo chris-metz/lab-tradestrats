@@ -16,6 +16,8 @@ class BollingerBandStrategy(Strategy):
 
     name = "Bollinger Band"
     description = "Buy when close < lower band, sell when close > upper band."
+    recommended_timeframe = "1h"
+    recommended_sl_stop = 0.03
 
     def __init__(self, bb_period: int = 20, num_std: float = 2.0):
         self.bb_period = bb_period

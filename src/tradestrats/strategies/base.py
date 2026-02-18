@@ -15,6 +15,8 @@ class Strategy(ABC):
 
     name: str = "BaseStrategy"
     description: str = ""
+    recommended_timeframe: str = "1h"
+    recommended_sl_stop: float = 0.05
 
     @abstractmethod
     def generate_signals(self, data: pd.DataFrame) -> pd.DataFrame:

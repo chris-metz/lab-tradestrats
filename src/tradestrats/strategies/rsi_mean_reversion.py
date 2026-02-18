@@ -16,6 +16,8 @@ class RSIMeanReversion(Strategy):
 
     name = "RSI Mean Reversion"
     description = "Buy when RSI < oversold, sell when RSI > overbought."
+    recommended_timeframe = "1h"
+    recommended_sl_stop = 0.05
 
     def __init__(
         self,

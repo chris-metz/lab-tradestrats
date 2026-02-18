@@ -23,9 +23,21 @@ Bollinger Baender bestehen aus einem gleitenden Durchschnitt (Mitte) und zwei St
 - `bb_upper` — Oberes Bollinger Band
 - `signal` — 1 (buy), -1 (sell), 0 (hold)
 
+## Empfohlene Einstellungen (Defaults)
+| Einstellung | Wert | Begruendung |
+|-------------|------|-------------|
+| Timeframe | `1h` | Scalping auf Stundenbasis, genug Daten fuer BB-Berechnung |
+| Stop-Loss | 3% | Engerer Stop als Trend-Strategien, da Mean-Reversion kleinere Swings handelt |
+
+Diese Werte werden automatisch verwendet wenn `-t` bzw. `--sl` nicht angegeben werden.
+
 ## Nutzung
 ```bash
+# Mit empfohlenen Defaults (1h, 3% SL)
 uv run tradestrats backtest -S bb BTC/USDT
+
+# Manuell ueberschreiben
+uv run tradestrats backtest -S bb -t 15m --sl 0.02 BTC/USDT
 ```
 
 ## Staerken & Schwaechen

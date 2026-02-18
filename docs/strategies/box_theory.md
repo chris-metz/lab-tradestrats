@@ -31,10 +31,13 @@ Urspruenglich populaer gemacht fuer Aktien und Index-Futures (ES, YM), hier adap
 - `buy_zone` — Obere Grenze der Buy-Zone
 - `signal` — 1 (buy), -1 (sell), 0 (hold)
 
-## Empfohlene Einstellungen
-- **Timeframe**: 5m (vom Autor bevorzugt), alternativ 15m oder 1h — die Strategie ist fuer Intraday-Trading konzipiert. Die Box wird immer aus der Tagescandle des Vortags berechnet, gehandelt wird auf dem kleineren Timeframe.
-- **Stop-Loss**: Knapp ausserhalb der Box-Grenze (1.5–3%), nicht der Standard von 5%
-- **Take-Profit**: Mittellinie oder gegenueberliegende Box-Seite
+## Empfohlene Einstellungen (Defaults)
+| Einstellung | Wert | Begruendung |
+|-------------|------|-------------|
+| Timeframe | `5m` | Vom Autor bevorzugt; alternativ 15m oder 1h. Die Box wird aus der Tagescandle des Vortags berechnet, gehandelt wird auf dem kleineren Timeframe. |
+| Stop-Loss | 2% | Knapp ausserhalb der Box-Grenze; Mean-Reversion innerhalb der Tagesrange braucht enge Stops |
+
+Diese Werte werden automatisch in CLI und Dashboard verwendet. Take-Profit: Mittellinie oder gegenueberliegende Box-Seite.
 
 ## Geeignete Maerkte
 Die Strategie wurde urspruenglich fuer **Aktien** (AAPL) und **Index-Futures** (ES, YM) entwickelt und dort demonstriert. Diese Maerkte haben klare Handelssessions mit definiertem Open/Close, was die Vortages-High/Low-Levels besonders aussagekraeftig macht.

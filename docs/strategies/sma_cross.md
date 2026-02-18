@@ -22,9 +22,21 @@ Klassische Crossover-Strategie mit zwei Simple Moving Averages. Wenn der schnell
 - `sma_slow` — Langsamer Simple Moving Average
 - `signal` — 1 (buy), -1 (sell), 0 (hold)
 
+## Empfohlene Einstellungen (Defaults)
+| Einstellung | Wert | Begruendung |
+|-------------|------|-------------|
+| Timeframe | `1d` | Trend-Following braucht laengere Kerzen, um Rauschen zu filtern |
+| Stop-Loss | 5% | Groessere Swings bei Daily-Candles erfordern weiteren Stop |
+
+Diese Werte werden automatisch verwendet wenn `-t` bzw. `--sl` nicht angegeben werden.
+
 ## Nutzung
 ```bash
+# Mit empfohlenen Defaults (1d, 5% SL)
 uv run tradestrats backtest -S sma BTC/USDT
+
+# Manuell ueberschreiben
+uv run tradestrats backtest -S sma -t 4h --sl 0.03 BTC/USDT
 ```
 
 ## Staerken & Schwaechen

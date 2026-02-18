@@ -15,6 +15,8 @@ class SMACrossover(Strategy):
 
     name = "SMA Crossover"
     description = "Buy when fast SMA crosses above slow SMA, sell on cross below."
+    recommended_timeframe = "1d"
+    recommended_sl_stop = 0.05
 
     def __init__(self, fast_period: int = 20, slow_period: int = 50):
         self.fast_period = fast_period

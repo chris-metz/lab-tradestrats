@@ -100,9 +100,9 @@ def main():
     )
     bt_parser.add_argument(
         "-t", "--timeframe",
-        default=DEFAULT_TIMEFRAME,
+        default=None,
         choices=TIMEFRAMES,
-        help=f"Candle-Groesse (default: {DEFAULT_TIMEFRAME})",
+        help="Candle-Groesse (default: empfohlener Wert der Strategie)",
     )
     bt_parser.add_argument(
         "-s", "--start",
@@ -134,8 +134,8 @@ def main():
     bt_parser.add_argument(
         "--sl",
         type=float,
-        default=0.05,
-        help="Stop-Loss als Dezimalzahl (default: 0.05 = 5%%)",
+        default=None,
+        help="Stop-Loss als Dezimalzahl (default: empfohlener Wert der Strategie)",
     )
 
     args = parser.parse_args()
@@ -252,6 +252,10 @@ def _cmd_cache(args):
 def _cmd_backtest(args):
     strategy = STRATEGIES[args.strategy]()
 
+    # Use strategy recommendations when user didn't specify
+    timeframe = args.timeframe or strategy.recommended_timeframe
+    sl_stop = args.sl if args.sl is not None else strategy.recommended_sl_stop
+
     # Default: 6 Monate zurueck
     if args.start is None:
         start = datetime.utcnow() - timedelta(days=180)
@@ -261,15 +265,15 @@ def _cmd_backtest(args):
     end = args.end
 
     print(f"Strategie:  {strategy.name}")
-    print(f"Symbol:     {args.symbol} | {args.timeframe} | {args.exchange}")
+    print(f"Symbol:     {args.symbol} | {timeframe} | {args.exchange}")
     print(f"Zeitraum:   {start} bis {end or 'jetzt'}")
-    print(f"Kapital:    {args.cash:,.2f} | Fees: {args.fees} | Stop-Loss: {args.sl:.0%}")
+    print(f"Kapital:    {args.cash:,.2f} | Fees: {args.fees} | Stop-Loss: {sl_stop:.0%}")
     print()
 
     print("Lade Daten...")
     data = fetch_ohlcv(
         symbol=args.symbol,
-        timeframe=args.timeframe,
+        timeframe=timeframe,
         start=start,
         end=end,
         exchange_id=args.exchange,
@@ -277,7 +281,7 @@ def _cmd_backtest(args):
     print(f"{len(data)} Candles geladen\n")
 
     print("Starte Backtest...")
-    result = engine.run(strategy, data, init_cash=args.cash, fees=args.fees, sl_stop=args.sl)
+    result = engine.run(strategy, data, init_cash=args.cash, fees=args.fees, sl_stop=sl_stop)
     print()
 
     # Summary

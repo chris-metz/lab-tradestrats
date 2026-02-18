@@ -25,6 +25,8 @@ class BoxTheory(Strategy):
 
     name = "Box Theory"
     description = "Sell near previous-day high, buy near previous-day low, avoid the middle."
+    recommended_timeframe = "5m"
+    recommended_sl_stop = 0.02
 
     def __init__(self, zone_pct: float = 0.25):
         self.zone_pct = zone_pct

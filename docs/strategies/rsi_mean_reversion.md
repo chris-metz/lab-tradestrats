@@ -22,9 +22,21 @@ Der Relative Strength Index (RSI) misst die Staerke von Preisbewegungen auf eine
 - `rsi` — RSI-Wert
 - `signal` — 1 (buy), -1 (sell), 0 (hold)
 
+## Empfohlene Einstellungen (Defaults)
+| Einstellung | Wert | Begruendung |
+|-------------|------|-------------|
+| Timeframe | `1h` | Guter Kompromiss zwischen Signalqualitaet und Datenmenge |
+| Stop-Loss | 5% | Standard-Absicherung fuer mittelfristige Swings |
+
+Diese Werte werden automatisch verwendet wenn `-t` bzw. `--sl` nicht angegeben werden.
+
 ## Nutzung
 ```bash
+# Mit empfohlenen Defaults (1h, 5% SL)
 uv run tradestrats backtest -S rsi BTC/USDT
+
+# Manuell ueberschreiben
+uv run tradestrats backtest -S rsi -t 4h --sl 0.03 BTC/USDT
 ```
 
 ## Staerken & Schwaechen

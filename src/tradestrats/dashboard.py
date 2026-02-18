@@ -9,11 +9,25 @@ from tradestrats.config import DEFAULT_EXCHANGE, DEFAULT_SYMBOL, TIMEFRAMES
 from tradestrats.data.fetcher import fetch_ohlcv
 from tradestrats.strategies.base import Strategy
 from tradestrats.strategies.bollinger_band import BollingerBandStrategy
+from tradestrats.strategies.box_theory import BoxTheory
 from tradestrats.strategies.rsi_mean_reversion import RSIMeanReversion
 from tradestrats.strategies.sma_cross import SMACrossover
 from tradestrats.visualization.charts import plot_candlestick, plot_equity_curve, plot_signals
 
-STRATEGY_KEYS = {"RSI Mean Reversion": "rsi", "SMA Crossover": "sma", "Bollinger Band": "bb"}
+STRATEGY_KEYS = {
+    "RSI Mean Reversion": "rsi",
+    "SMA Crossover": "sma",
+    "Bollinger Band": "bb",
+    "Box Theory": "box",
+}
+
+# Map keys to strategy classes for reading recommended defaults
+_STRATEGY_CLASSES: dict[str, type[Strategy]] = {
+    "rsi": RSIMeanReversion,
+    "sma": SMACrossover,
+    "bb": BollingerBandStrategy,
+    "box": BoxTheory,
+}
 
 
 def _render_sidebar() -> dict:
@@ -34,10 +48,18 @@ def _render_sidebar() -> dict:
     elif strategy_key == "bb":
         params["bb_period"] = st.sidebar.number_input("BB Period", 2, 100, 20)
         params["num_std"] = st.sidebar.number_input("Std Dev", 0.5, 5.0, 2.0, step=0.1)
+    elif strategy_key == "box":
+        params["zone_pct"] = st.sidebar.number_input("Zone %", 0.05, 0.50, 0.25, step=0.05, format="%.2f")
+
+    # Read recommended defaults from the selected strategy class
+    strat_cls = _STRATEGY_CLASSES[strategy_key]
+    rec_tf = strat_cls.recommended_timeframe
+    rec_sl = strat_cls.recommended_sl_stop
 
     st.sidebar.header("Market")
     params["symbol"] = st.sidebar.text_input("Symbol", DEFAULT_SYMBOL)
-    params["timeframe"] = st.sidebar.selectbox("Timeframe", TIMEFRAMES, index=TIMEFRAMES.index("1d"))
+    tf_index = TIMEFRAMES.index(rec_tf) if rec_tf in TIMEFRAMES else TIMEFRAMES.index("1h")
+    params["timeframe"] = st.sidebar.selectbox("Timeframe", TIMEFRAMES, index=tf_index)
     default_start = date.today() - timedelta(days=180)
     params["start"] = st.sidebar.date_input("Start", default_start)
     params["end"] = st.sidebar.date_input("End", date.today())
@@ -46,7 +68,7 @@ def _render_sidebar() -> dict:
     st.sidebar.header("Portfolio")
     params["cash"] = st.sidebar.number_input("Initial Cash", 100.0, 1_000_000.0, 10_000.0, step=1000.0)
     params["fees"] = st.sidebar.number_input("Fees", 0.0, 0.1, 0.001, step=0.0001, format="%.4f")
-    params["stop_loss"] = st.sidebar.number_input("Stop-Loss", 0.0, 1.0, 0.05, step=0.01, format="%.2f")
+    params["stop_loss"] = st.sidebar.number_input("Stop-Loss", 0.0, 1.0, rec_sl, step=0.01, format="%.2f")
 
     params["run"] = st.sidebar.button("Run Backtest", type="primary", use_container_width=True)
     return params
@@ -66,6 +88,8 @@ def _build_strategy(params: dict) -> Strategy:
             fast_period=params["fast_period"],
             slow_period=params["slow_period"],
         )
+    if key == "box":
+        return BoxTheory(zone_pct=params["zone_pct"])
     return BollingerBandStrategy(
         bb_period=params["bb_period"],
         num_std=params["num_std"],
@@ -81,6 +105,12 @@ def _get_indicators(strategy_key: str, signals) -> dict | None:
             "BB Lower": signals["bb_lower"],
             "BB Mid": signals["bb_mid"],
             "BB Upper": signals["bb_upper"],
+        }
+    if strategy_key == "box":
+        return {
+            "Box High": signals["box_high"],
+            "Box Mid": signals["box_mid"],
+            "Box Low": signals["box_low"],
         }
     return None
 
