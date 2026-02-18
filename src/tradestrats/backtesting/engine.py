@@ -78,13 +78,18 @@ def run(
     entries = (signals["signal"] == 1) & (signals["signal"].shift(1) != 1)
     exits = (signals["signal"] == -1) & (signals["signal"].shift(1) != -1)
 
+    # Detect frequency from the DatetimeIndex; fall back to median diff
+    freq = data.index.freq
+    if freq is None:
+        freq = pd.tseries.frequencies.to_offset(data.index.to_series().diff().median())
+
     portfolio = vbt.Portfolio.from_signals(
         close=data["close"],
         entries=entries,
         exits=exits,
         init_cash=init_cash,
         fees=fees,
-        freq="infer",
+        freq=freq,
     )
 
     return BacktestResult(portfolio=portfolio, signals=signals)

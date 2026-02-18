@@ -5,8 +5,16 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 
+from tradestrats.backtesting import engine
 from tradestrats.config import DATA_DIR, DEFAULT_EXCHANGE, DEFAULT_SYMBOL, DEFAULT_TIMEFRAME, TIMEFRAMES
 from tradestrats.data.fetcher import fetch_ohlcv
+from tradestrats.strategies.rsi_mean_reversion import RSIMeanReversion
+from tradestrats.strategies.sma_cross import SMACrossover
+
+STRATEGIES = {
+    "rsi": lambda: RSIMeanReversion(),
+    "sma": lambda: SMACrossover(),
+}
 
 
 def main():
@@ -66,6 +74,54 @@ def main():
         help="Erste Zeilen statt letzte anzeigen",
     )
 
+    # --- backtest ---
+    bt_parser = subparsers.add_parser("backtest", help="Backtest einer Strategie ausfuehren")
+    bt_parser.add_argument(
+        "symbol",
+        nargs="?",
+        default=DEFAULT_SYMBOL,
+        help=f"Trading-Pair, z.B. BTC/USDT (default: {DEFAULT_SYMBOL})",
+    )
+    bt_parser.add_argument(
+        "-S", "--strategy",
+        default="rsi",
+        choices=list(STRATEGIES),
+        help="Strategie (default: rsi)",
+    )
+    bt_parser.add_argument(
+        "-t", "--timeframe",
+        default=DEFAULT_TIMEFRAME,
+        choices=TIMEFRAMES,
+        help=f"Candle-Groesse (default: {DEFAULT_TIMEFRAME})",
+    )
+    bt_parser.add_argument(
+        "-s", "--start",
+        default=None,
+        help="Startzeitpunkt, z.B. 2025-01-01 (default: 6 Monate zurueck)",
+    )
+    bt_parser.add_argument(
+        "-e", "--end",
+        default=None,
+        help="Endzeitpunkt, z.B. 2025-06-01 (default: jetzt)",
+    )
+    bt_parser.add_argument(
+        "--exchange",
+        default=DEFAULT_EXCHANGE,
+        help=f"Boerse (default: {DEFAULT_EXCHANGE})",
+    )
+    bt_parser.add_argument(
+        "--cash",
+        type=float,
+        default=10_000.0,
+        help="Startkapital (default: 10000)",
+    )
+    bt_parser.add_argument(
+        "--fees",
+        type=float,
+        default=0.001,
+        help="Fee-Rate als Dezimalzahl (default: 0.001 = 0.1%%)",
+    )
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -76,6 +132,8 @@ def main():
         _cmd_fetch(args)
     elif args.command == "cache":
         _cmd_cache(args)
+    elif args.command == "backtest":
+        _cmd_backtest(args)
 
 
 def _cmd_fetch(args):
@@ -171,3 +229,47 @@ def _cmd_cache(args):
     else:
         print(f"Letzte {n} Zeilen:")
         print(df.tail(n).to_string())
+
+
+def _cmd_backtest(args):
+    strategy = STRATEGIES[args.strategy]()
+
+    # Default: 6 Monate zurueck
+    if args.start is None:
+        start = datetime.utcnow() - timedelta(days=180)
+    else:
+        start = args.start
+
+    end = args.end
+
+    print(f"Strategie:  {strategy.name}")
+    print(f"Symbol:     {args.symbol} | {args.timeframe} | {args.exchange}")
+    print(f"Zeitraum:   {start} bis {end or 'jetzt'}")
+    print(f"Kapital:    {args.cash:,.2f} | Fees: {args.fees}")
+    print()
+
+    print("Lade Daten...")
+    data = fetch_ohlcv(
+        symbol=args.symbol,
+        timeframe=args.timeframe,
+        start=start,
+        end=end,
+        exchange_id=args.exchange,
+    )
+    print(f"{len(data)} Candles geladen\n")
+
+    print("Starte Backtest...")
+    result = engine.run(strategy, data, init_cash=args.cash, fees=args.fees)
+    print()
+
+    # Summary
+    s = result.summary()
+    print("=" * 40)
+    print("  BACKTEST ERGEBNIS")
+    print("=" * 40)
+    print(f"  Total Return:  {s['total_return']:>+10.2%}")
+    print(f"  Sharpe Ratio:  {s['sharpe_ratio']:>10.2f}")
+    print(f"  Max Drawdown:  {s['max_drawdown']:>10.2%}")
+    print(f"  Trades:        {s['total_trades']:>10}")
+    print(f"  Win Rate:      {s['win_rate']:>10.2%}")
+    print("=" * 40)

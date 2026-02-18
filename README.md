@@ -5,10 +5,11 @@ Trading-Strategie-Analyse und Backtesting-Framework fuer Kryptomaerkte.
 ## Features
 
 - **Datenabruf** — OHLCV-Daten via ccxt (Binance etc.) mit automatischem Parquet-Caching
-- **Strategien** — Flexibles Interface fuer beliebige Strategietypen (Beispiel: SMA Crossover)
+- **Strategien** — Flexibles Interface fuer beliebige Strategietypen (SMA Crossover, RSI Mean-Reversion)
 - **Backtesting** — Vektorisiertes Backtesting mit vectorbt (Sharpe, Drawdown, Win Rate etc.)
 - **Indikatoren** — Zugriff auf 130+ technische Indikatoren via pandas-ta
 - **Visualisierung** — Interaktive Plotly-Charts (Candlestick, Equity Curve, Signale)
+- **CLI-Backtest** — Backtests direkt aus dem Terminal mit `tradestrats backtest`
 
 ## Setup
 
@@ -28,6 +29,13 @@ uv run tradestrats fetch                    # Default: BTC/USDT, 1h, letzte 6 Mo
 uv run tradestrats cache                    # Alle gecachten Dateien auflisten
 uv run tradestrats cache 1                  # Details + letzte 10 Zeilen
 uv run tradestrats cache 1 --head -n 20     # Erste 20 Zeilen anzeigen
+
+# Backtest ausfuehren
+uv run tradestrats backtest                              # Default: RSI, BTC/USDT, 1d, 6 Monate
+uv run tradestrats backtest --strategy sma               # SMA Crossover
+uv run tradestrats backtest --strategy rsi -t 4h         # RSI auf 4h-Candles
+uv run tradestrats backtest -s 2025-01-01 -e 2025-06-01  # Custom Zeitraum
+uv run tradestrats backtest --cash 50000 --fees 0.002    # Custom Kapital/Fees
 ```
 
 ### fetch
@@ -48,6 +56,19 @@ uv run tradestrats cache 1 --head -n 20     # Erste 20 Zeilen anzeigen
 | `-n, --rows` | Anzahl Zeilen anzeigen | `10` |
 | `--head` | Erste statt letzte Zeilen anzeigen | aus |
 
+### backtest
+
+| Parameter | Beschreibung | Default |
+|-----------|-------------|---------|
+| `symbol` | Trading-Pair, z.B. `BTC/USDT` | `BTC/USDT` |
+| `-S, --strategy` | Strategie: `rsi` oder `sma` | `rsi` |
+| `-t, --timeframe` | Candle-Groesse: `1m, 5m, 15m, 1h, 4h, 1d` | `1d` |
+| `-s, --start` | Startzeitpunkt, z.B. `2025-01-01` | 6 Monate zurueck |
+| `-e, --end` | Endzeitpunkt, z.B. `2025-06-01` | jetzt |
+| `--exchange` | Boerse | `binance` |
+| `--cash` | Startkapital | `10000` |
+| `--fees` | Fee-Rate (Dezimalzahl, z.B. `0.001` = 0.1%) | `0.001` |
+
 ## Quickstart (Python)
 
 ```python
@@ -63,18 +84,21 @@ result = run(SMACrossover(fast_period=20, slow_period=50), data)
 print(result.summary())
 ```
 
-Ausfuehrliches Beispiel: `notebooks/01_getting_started.ipynb`
+Notebooks:
+- `notebooks/01_getting_started.ipynb` — SMA Crossover Walkthrough
+- `notebooks/02_rsi_strategy.ipynb` — RSI Mean-Reversion Strategie
 
 ## Projektstruktur
 
 ```
 src/tradestrats/
-├── cli.py                 # CLI (fetch, cache)
+├── cli.py                 # CLI (fetch, cache, backtest)
 ├── config.py              # Zentrale Konfiguration
 ├── data/fetcher.py        # ccxt Datenabruf + Parquet-Caching
 ├── strategies/
 │   ├── base.py            # Abstrakte Strategy-Basisklasse
-│   └── sma_cross.py       # SMA Crossover Beispiel
+│   ├── sma_cross.py       # SMA Crossover (Trend-Following)
+│   └── rsi_mean_reversion.py # RSI Mean-Reversion
 ├── backtesting/engine.py  # vectorbt Backtesting Runner
 ├── indicators/registry.py # pandas-ta Indikator-Wrapper
 └── visualization/charts.py # Plotly Charts
