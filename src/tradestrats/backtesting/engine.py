@@ -42,6 +42,10 @@ class BacktestResult:
     def equity_curve(self) -> pd.Series:
         return self.portfolio.value()
 
+    @property
+    def final_value(self) -> float:
+        return self.portfolio.final_value()
+
     def summary(self) -> dict:
         """Return a summary dict of key metrics."""
         return {
@@ -50,6 +54,7 @@ class BacktestResult:
             "max_drawdown": self.max_drawdown,
             "total_trades": self.total_trades,
             "win_rate": self.win_rate,
+            "final_value": self.final_value,
         }
 
 

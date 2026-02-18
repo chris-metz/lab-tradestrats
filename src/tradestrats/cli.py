@@ -276,6 +276,7 @@ def _cmd_backtest(args):
     print("  BACKTEST ERGEBNIS")
     print("=" * 40)
     print(f"  Total Return:  {s['total_return']:>+10.2%}")
+    print(f"  Endkapital:    {s['final_value']:>10,.2f}")
     print(f"  Sharpe Ratio:  {s['sharpe_ratio']:>10.2f}")
     print(f"  Max Drawdown:  {s['max_drawdown']:>10.2%}")
     print(f"  Trades:        {s['total_trades']:>10}")
