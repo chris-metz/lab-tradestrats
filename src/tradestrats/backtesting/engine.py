@@ -58,6 +58,7 @@ def run(
     data: pd.DataFrame,
     init_cash: float = 10_000.0,
     fees: float = 0.001,
+    sl_stop: float = 0.05,
 ) -> BacktestResult:
     """Run a backtest for the given strategy on OHLCV data.
 
@@ -66,6 +67,7 @@ def run(
         data: OHLCV DataFrame (DatetimeIndex, columns: open/high/low/close/volume).
         init_cash: Starting cash for the portfolio.
         fees: Trading fee as a fraction (e.g. 0.001 = 0.1%).
+        sl_stop: Stop-loss as a fraction (e.g. 0.05 = 5%).
 
     Returns:
         BacktestResult with portfolio and signal data.
@@ -89,6 +91,7 @@ def run(
         exits=exits,
         init_cash=init_cash,
         fees=fees,
+        sl_stop=sl_stop,
         freq=freq,
     )
 

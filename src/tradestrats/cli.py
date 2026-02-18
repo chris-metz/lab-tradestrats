@@ -123,6 +123,12 @@ def main():
         default=0.001,
         help="Fee-Rate als Dezimalzahl (default: 0.001 = 0.1%%)",
     )
+    bt_parser.add_argument(
+        "--sl",
+        type=float,
+        default=0.05,
+        help="Stop-Loss als Dezimalzahl (default: 0.05 = 5%%)",
+    )
 
     args = parser.parse_args()
 
@@ -247,7 +253,7 @@ def _cmd_backtest(args):
     print(f"Strategie:  {strategy.name}")
     print(f"Symbol:     {args.symbol} | {args.timeframe} | {args.exchange}")
     print(f"Zeitraum:   {start} bis {end or 'jetzt'}")
-    print(f"Kapital:    {args.cash:,.2f} | Fees: {args.fees}")
+    print(f"Kapital:    {args.cash:,.2f} | Fees: {args.fees} | Stop-Loss: {args.sl:.0%}")
     print()
 
     print("Lade Daten...")
@@ -261,7 +267,7 @@ def _cmd_backtest(args):
     print(f"{len(data)} Candles geladen\n")
 
     print("Starte Backtest...")
-    result = engine.run(strategy, data, init_cash=args.cash, fees=args.fees)
+    result = engine.run(strategy, data, init_cash=args.cash, fees=args.fees, sl_stop=args.sl)
     print()
 
     # Summary

@@ -69,6 +69,7 @@ uv run tradestrats backtest --cash 50000 --fees 0.002    # Custom Kapital/Fees
 | `--exchange` | Boerse | `binance` |
 | `--cash` | Startkapital | `10000` |
 | `--fees` | Fee-Rate (Dezimalzahl, z.B. `0.001` = 0.1%) | `0.001` |
+| `--sl` | Stop-Loss (Dezimalzahl, z.B. `0.05` = 5%) | `0.05` |
 
 ## Quickstart (Python)
 
