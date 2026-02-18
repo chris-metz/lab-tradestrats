@@ -12,12 +12,14 @@ from tradestrats.backtesting import engine
 from tradestrats.config import DATA_DIR, DEFAULT_EXCHANGE, DEFAULT_SYMBOL, DEFAULT_TIMEFRAME, TIMEFRAMES
 from tradestrats.data.fetcher import fetch_ohlcv
 from tradestrats.strategies.bollinger_band import BollingerBandStrategy
+from tradestrats.strategies.box_theory import BoxTheory
 from tradestrats.strategies.rsi_mean_reversion import RSIMeanReversion
 from tradestrats.strategies.sma_cross import SMACrossover
 
 STRATEGIES = {
     "rsi": lambda: RSIMeanReversion(),
     "sma": lambda: SMACrossover(),
+    "box": lambda: BoxTheory(),
     "bb": lambda: BollingerBandStrategy(),
 }
 
